@@ -16,7 +16,7 @@ namespace DIS_Dayforce_Assignment.Controllers
         }
 
         [HttpGet("GetEmployeeData")]
-        public ActionResult<List<PaySummaryRecordDTO>> GetPayInfo([FromQuery] List<string> employeeNumbers, [FromQuery] List<DateTime> datesWorked)
+        public async Task<ActionResult<List<PaySummaryRecordDTO>>> GetPayInfo([FromQuery] List<string> employeeNumbers, [FromQuery] List<DateTime> datesWorked)
         {
             if (employeeNumbers == null || datesWorked == null || employeeNumbers.Count != datesWorked.Count)
             {
@@ -25,7 +25,7 @@ namespace DIS_Dayforce_Assignment.Controllers
 
             var employeeWorkInfos = employeeNumbers.Zip(datesWorked, (number, date) => (number, date)).ToList();
 
-            var payInfos = _payInfoService.GetPayInfo(employeeWorkInfos);
+            var payInfos = await _payInfoService.GetPayInfoAsync(employeeWorkInfos);
             if (payInfos == null || !payInfos.Any())
             {
                 return NotFound();

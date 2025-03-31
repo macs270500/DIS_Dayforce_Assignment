@@ -1,0 +1,47 @@
+Documentation for the project:
+
+1. Create the Database table with the embedded SQL query "Database Table Creation.sql".
+
+2. The solution is built using .NET 9 and C# 13.0. Ensure you have the appropriate SDKs installed.
+
+3. The project structure is as follows:
+   - DIS_Dayforce_Assignment/
+     - Program.cs: Configures and runs the web application.
+     - DIS_Dayforce_Assignment.csproj: Project file containing dependencies and target framework.
+     - Stores/
+       - IPayInfoStore.cs: Interface defining methods for pay information storage.
+       - PayInfoStore.cs: Implementation of IPayInfoStore, handles database operations.
+     - Services/
+       - IPayInfoService.cs: Interface defining methods for pay information services.
+       - PayInfoService.cs: Implementation of IPayInfoService, contains business logic.
+     - Unit Tests/
+       - ServiceRegistrationTests.cs: Unit tests for service registration.
+
+4. Configuration:
+   - The appsettings.json file contains the connection string for the database. Ensure you update this file with the correct connection string to access your database.
+
+5. Dependencies:
+   - The project uses several NuGet packages, including:
+     - FluentAssertions
+     - Microsoft.AspNetCore.OpenApi
+     - Microsoft.Data.SqlClient
+     - Microsoft.NET.Test.Sdk
+     - Moq
+     - MSTest.TestFramework
+     - NSwag.AspNetCore
+     - Swashbuckle.AspNetCore
+     - System.Configuration.ConfigurationManager
+     - xunit
+     - xunit.runner.visualstudio
+
+6. Running the application:
+   - Use Visual Studio to build and run the application.
+   - The application will start a web server and expose API endpoints as defined in the controllers.
+
+7. Testing:
+   - Unit tests are provided in the Unit Tests/ directory.
+   - Use the Test Explorer in Visual Studio to run the tests and ensure everything is working correctly.
+
+8. Swagger/OpenAPI:
+   - The application is configured to use Swagger for API documentation.
+   - When running in development mode, Swagger UI is available at the root URL of the application.

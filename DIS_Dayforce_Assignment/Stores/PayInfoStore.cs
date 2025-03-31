@@ -14,7 +14,7 @@ namespace DIS_Dayforce_Assignment.Stores
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
-        public List<PaySummaryRecordDTO> SummarizePayInfo(List<TimeCardRecordDTO> timeCard, List<RateTableRowDTO> rateTable)
+        public async Task<List<PaySummaryRecordDTO>> SummarizePayInfoAsync(List<TimeCardRecordDTO> timeCard, List<RateTableRowDTO> rateTable)
         {
             var result = new List<PaySummaryRecordDTO>();
             var payMultiplierHelper = new PayMultiplierHelper();
@@ -23,12 +23,14 @@ namespace DIS_Dayforce_Assignment.Stores
             foreach (var timecard in timeCard)
             {
                 Decimal matchingRate;
-                jobAndDepartment = GetJobAndDepartment(timecard.EmployeeNumber, timecard.DateWorked);
+                jobAndDepartment = await GetJobAndDepartmentAsync(timecard.EmployeeNumber, timecard.DateWorked);
 
+                // With the following line to await the asynchronous method
+                var hourlyRate = await GetHourlyRateAsync(jobAndDepartment);
                 // Find the matching job rate
                 if (timecard.EarningsCode != "Regular")
                 {
-                    matchingRate = GetHourlyRate(jobAndDepartment);
+                    matchingRate = await GetHourlyRateAsync(jobAndDepartment);
                 }
                 else
                 {
@@ -43,8 +45,12 @@ namespace DIS_Dayforce_Assignment.Stores
                 {
                     applicableRate = matchingRate;
                 }
+                else if (matchingRate != null && hourlyRate > matchingRate && hourlyRate > timecard.Rate)
+                {
+                    applicableRate = hourlyRate;
+                }
 
-                var finalRate = applicableRate * payMultiplierHelper.GetPayMultiplier(timecard.EarningsCode);
+                    var finalRate = applicableRate * payMultiplierHelper.GetPayMultiplier(timecard.EarningsCode);
                 var totalPay = finalRate * timecard.Hours + timecard.Bonus;
 
                 var summary = result.FirstOrDefault(r => r.EmployeeNumber == timecard.EmployeeNumber);
@@ -72,8 +78,7 @@ namespace DIS_Dayforce_Assignment.Stores
             return result;
         }
 
-
-        public List<RateTableRowDTO> GetRateTable()
+        public async Task<List<RateTableRowDTO>> GetRateTableAsync()
         {
             var result = new List<RateTableRowDTO>();
             var connectionString = _configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not found.");
@@ -81,10 +86,10 @@ namespace DIS_Dayforce_Assignment.Stores
             {
                 var rateTableQuery = "SELECT * FROM rate_table";
                 var rateTableCommand = new SqlCommand(rateTableQuery, connection);
-                connection.Open();
-                using (var rateTableReader = rateTableCommand.ExecuteReader())
+                await connection.OpenAsync();
+                using (var rateTableReader = await rateTableCommand.ExecuteReaderAsync())
                 {
-                    while (rateTableReader.Read())
+                    while (await rateTableReader.ReadAsync())
                     {
                         result.Add(new RateTableRowDTO
                         {
@@ -99,7 +104,8 @@ namespace DIS_Dayforce_Assignment.Stores
             }
             return result;
         }
-        private EmployeeJobAndDepartmentDTO GetJobAndDepartment(string employeeNumber, DateTime dateWorked)
+
+        private async Task<EmployeeJobAndDepartmentDTO> GetJobAndDepartmentAsync(string employeeNumber, DateTime dateWorked)
         {
             EmployeeJobAndDepartmentDTO employeeJobAndDepartmentDTO = new EmployeeJobAndDepartmentDTO();
             var connectionString = _configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not found.");
@@ -109,23 +115,21 @@ namespace DIS_Dayforce_Assignment.Stores
                 var timeCardCommand = new SqlCommand(timeCardQuery, connection);
                 timeCardCommand.Parameters.AddWithValue("@EmployeeNumber", employeeNumber);
                 timeCardCommand.Parameters.AddWithValue("@DateWorked", ParseDate(dateWorked.ToString("yyyy-MM-dd")));
-                connection.Open();
-                using (var timeCardReader = timeCardCommand.ExecuteReader())
+                await connection.OpenAsync();
+                using (var timeCardReader = await timeCardCommand.ExecuteReaderAsync())
                 {
-                    while (timeCardReader.Read())
+                    while (await timeCardReader.ReadAsync())
                     {
                         employeeJobAndDepartmentDTO.Job = timeCardReader["JobWorked"].ToString();
                         employeeJobAndDepartmentDTO.Department = int.Parse(timeCardReader["DeptWorked"].ToString());
                         employeeJobAndDepartmentDTO.EmployeeNumber = employeeNumber;
                     }
                 }
-
             }
             return employeeJobAndDepartmentDTO;
-
         }
 
-        public decimal GetHourlyRate(EmployeeJobAndDepartmentDTO employeeJobAndDepartmentDTO)
+        public async Task<decimal> GetHourlyRateAsync(EmployeeJobAndDepartmentDTO employeeJobAndDepartmentDTO)
         {
             if (employeeJobAndDepartmentDTO == null)
             {
@@ -147,10 +151,10 @@ namespace DIS_Dayforce_Assignment.Stores
                 rateTableCommand.Parameters.AddWithValue("@Job", employeeJobAndDepartmentDTO.Job);
                 rateTableCommand.Parameters.AddWithValue("@Dept", employeeJobAndDepartmentDTO.Department);
 
-                connection.Open();
-                using (var rateTableReader = rateTableCommand.ExecuteReader())
+                await connection.OpenAsync();
+                using (var rateTableReader = await rateTableCommand.ExecuteReaderAsync())
                 {
-                    if (rateTableReader.Read())
+                    if (await rateTableReader.ReadAsync())
                     {
                         hourlyRate = Convert.ToDecimal(rateTableReader["Hourly_Rate"]);
                     }
@@ -170,7 +174,7 @@ namespace DIS_Dayforce_Assignment.Stores
             return hourlyRate;
         }
 
-        public List<TimeCardRecordDTO> GetTimeCardRecords(string employeeNumber, DateTime dateWorked)
+        public async Task<List<TimeCardRecordDTO>> GetTimeCardRecordsAsync(string employeeNumber, DateTime dateWorked)
         {
             var result = new List<TimeCardRecordDTO>();
             var connectionString = _configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not found.");
@@ -180,10 +184,10 @@ namespace DIS_Dayforce_Assignment.Stores
                 var timeCardCommand = new SqlCommand(timeCardQuery, connection);
                 timeCardCommand.Parameters.AddWithValue("@EmployeeNumber", employeeNumber);
                 timeCardCommand.Parameters.AddWithValue("@DateWorked", ParseDate(dateWorked.ToString("yyyy-MM-dd")));
-                connection.Open();
-                using (var timeCardReader = timeCardCommand.ExecuteReader())
+                await connection.OpenAsync();
+                using (var timeCardReader = await timeCardCommand.ExecuteReaderAsync())
                 {
-                    while (timeCardReader.Read())
+                    while (await timeCardReader.ReadAsync())
                     {
                         result.Add(new TimeCardRecordDTO
                         {

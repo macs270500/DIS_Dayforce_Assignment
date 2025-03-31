@@ -12,14 +12,14 @@ namespace DIS_Dayforce_Assignment.Services
             _payInfoStore = payInfoStore ?? throw new ArgumentNullException(nameof(payInfoStore));
         }
 
-        public PaySummaryRecordDTO GetPayInfoByEmployeeNumberAndDate(string employeeNumber, DateTime dateWorked)
+        public async Task<PaySummaryRecordDTO> GetPayInfoByEmployeeNumberAndDateAsync(string employeeNumber, DateTime dateWorked)
         {
             var paySummary = new PaySummaryRecordDTO();
-            var timeCardRecords = _payInfoStore.GetTimeCardRecords(employeeNumber, dateWorked);
-            var rateTableRecords = _payInfoStore.GetRateTable();
+            var timeCardRecords = await _payInfoStore.GetTimeCardRecordsAsync(employeeNumber, dateWorked);
+            var rateTableRecords = await _payInfoStore.GetRateTableAsync();
 
             // Summarize Pay Info
-            var summarizedPayInfo = _payInfoStore.SummarizePayInfo(timeCardRecords, rateTableRecords);
+            var summarizedPayInfo = await _payInfoStore.SummarizePayInfoAsync(timeCardRecords, rateTableRecords);
 
             // Get the specific pay summary for the given employee number and date worked
             paySummary = summarizedPayInfo.FirstOrDefault(p => p.EmployeeNumber == employeeNumber && p.TotalHours > 0);
@@ -27,13 +27,13 @@ namespace DIS_Dayforce_Assignment.Services
             return paySummary;
         }
 
-        public List<PaySummaryRecordDTO> GetPayInfo(List<(string EmployeeNumber, DateTime DateWorked)> employeeWorkInfos)
+        public async Task<List<PaySummaryRecordDTO>> GetPayInfoAsync(List<(string EmployeeNumber, DateTime DateWorked)> employeeWorkInfos)
         {
             var paySummaries = new List<PaySummaryRecordDTO>();
 
             foreach (var (employeeNumber, dateWorked) in employeeWorkInfos)
             {
-                var paySummary = GetPayInfoByEmployeeNumberAndDate(employeeNumber, dateWorked);
+                var paySummary = await GetPayInfoByEmployeeNumberAndDateAsync(employeeNumber, dateWorked);
                 if (paySummary != null)
                 {
                     paySummaries.Add(paySummary);

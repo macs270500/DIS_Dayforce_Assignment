@@ -4,8 +4,8 @@ namespace DIS_Dayforce_Assignment.Stores
 {
     public interface IPayInfoStore
     {
-        List<PaySummaryRecordDTO> SummarizePayInfo(List<TimeCardRecordDTO> timeCard, List<RateTableRowDTO> rateTable);
-        List<TimeCardRecordDTO> GetTimeCardRecords(string employeeNumber, DateTime dateWorked);
-        List<RateTableRowDTO> GetRateTable();
+        Task<List<PaySummaryRecordDTO>> SummarizePayInfoAsync(List<TimeCardRecordDTO> timeCard, List<RateTableRowDTO> rateTable);
+        Task<List<TimeCardRecordDTO>> GetTimeCardRecordsAsync(string employeeNumber, DateTime dateWorked);
+        Task<List<RateTableRowDTO>> GetRateTableAsync();
     }
 }

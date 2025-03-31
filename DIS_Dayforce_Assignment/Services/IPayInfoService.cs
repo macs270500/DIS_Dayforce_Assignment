@@ -4,6 +4,6 @@ namespace DIS_Dayforce_Assignment.Services
 {
     public interface IPayInfoService
     {
-        List<PaySummaryRecordDTO> GetPayInfo(List<(string EmployeeNumber, DateTime DateWorked)> employeeWorkInfos);
+        Task<List<PaySummaryRecordDTO>> GetPayInfoAsync(List<(string EmployeeNumber, DateTime DateWorked)> employeeWorkInfos);
     }
 }
